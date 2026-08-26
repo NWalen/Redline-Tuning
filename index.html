@@ -44,10 +44,10 @@
     --line:#333a48;
     --text:#e9ebf1;
     --text-dim:#98a1b3;
-    --accent:#ff8a3d;
-    --accent-soft:#ff8a3d22;
+    --accent:#ff3b46;
+    --accent-soft:#ff3b4622;
     --accent-2:#4fd1c5;
-    --danger:#ff5470;
+    --danger:#b8202f;
     --info:#6c9bff;
     --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px -14px rgba(0,0,0,.6);
   }
@@ -796,7 +796,7 @@
   }
 
   function deltaTag(oldV, newV, higherIsRear){
-    if(oldV===null || newV===null || oldV===0) return "";
+    if(oldV===null || newV===null || oldV===0 || isNaN(oldV) || isNaN(newV)) return "";
     var diff = newV-oldV;
     if(Math.abs(diff) < 0.005) return '<span class="delta">no change</span>';
     var cls = diff>0 ? "up" : "down";
@@ -1092,6 +1092,13 @@
         state = JSON.parse(JSON.stringify(car));
         renderAll();
       });
+      item.addEventListener("keydown", function(e){
+        if(e.key==="Enter" || e.key===" "){
+          e.preventDefault();
+          state = JSON.parse(JSON.stringify(car));
+          renderAll();
+        }
+      });
       list.appendChild(item);
     });
   }
@@ -1132,18 +1139,103 @@
     renderAll();
   });
 
-  // save button lives in header for convenience — add it next to the id row
-  (function addSaveButton(){
+  function fmt(v){ return v===null || v===undefined ? "—" : v; }
+
+  function buildTuneText(){
+    var presetLabel = PRESETS.find(function(p){return p.id===state.preset;}).label;
+    var lines = [];
+    lines.push("REDLINE TUNING — " + (state.name || "Unnamed car"));
+    lines.push((state.drivetrain||"") + (state.piClass? " · "+state.piClass : "") + " · " + presetLabel + " preset");
+    lines.push("");
+
+    var g = computeGearing();
+    var gearNames = ["1st","2nd","3rd","4th","5th","6th","7th","8th","9th","10th"];
+    var gearParts = [];
+    for(var i=0;i<state.gearing.numGears;i++){ if(g.gears[i]!==null) gearParts.push(gearNames[i]+" "+g.gears[i]); }
+    if(g.finalDrive!==null || gearParts.length){
+      lines.push("GEARING: Final Drive " + fmt(g.finalDrive) + (gearParts.length? " | "+gearParts.join(" | ") : ""));
+    }
+
+    var a = computeAlignment();
+    lines.push("ALIGNMENT: Camber " + a.camberF + " / " + a.camberR + " | Toe " + a.toeF + " / " + a.toeR + " | Caster " + a.casterF);
+
+    var ar = computeBias(state.antiroll.front, state.antiroll.rear);
+    if(ar.front!==null || ar.rear!==null) lines.push("ANTIROLL: " + fmt(ar.front) + " / " + fmt(ar.rear));
+
+    var sp = computeBias(state.springs.front, state.springs.rear);
+    var ride = computeRide();
+    if(sp.front!==null || sp.rear!==null) lines.push("SPRINGS: " + fmt(sp.front) + " / " + fmt(sp.rear) + " lb-in");
+    if(ride.rideF!==null || ride.rideR!==null) lines.push("RIDE HEIGHT: " + fmt(ride.rideF) + " / " + fmt(ride.rideR) + " in");
+
+    var d = computeDamping();
+    if(d.reboundF!==null || d.reboundR!==null) lines.push("REBOUND: " + fmt(d.reboundF) + " / " + fmt(d.reboundR));
+    if(d.bumpF!==null || d.bumpR!==null) lines.push("BUMP: " + fmt(d.bumpF) + " / " + fmt(d.bumpR));
+
+    var b = computeBrake();
+    if(b.balance!==null || b.pressure!==null) lines.push("BRAKE: Balance " + fmt(b.balance) + "% | Pressure " + fmt(b.pressure) + "%");
+
+    var df = computeDiff();
+    var diffParts = [];
+    if(state.drivetrain!=="RWD" && (df.frontAccel!==null || df.frontDecel!==null)) diffParts.push("Front " + fmt(df.frontAccel) + "/" + fmt(df.frontDecel));
+    if(state.drivetrain!=="FWD" && (df.rearAccel!==null || df.rearDecel!==null)) diffParts.push("Rear " + fmt(df.rearAccel) + "/" + fmt(df.rearDecel));
+    if(state.drivetrain==="AWD" && df.center!==null) diffParts.push("Center " + df.center + "% rear");
+    if(diffParts.length) lines.push("DIFF: " + diffParts.join(" | "));
+
+    var ae = computeAero();
+    if(ae.front!==null || ae.rear!==null) lines.push("AERO: " + fmt(ae.front) + " / " + fmt(ae.rear) + " lb");
+
+    var t = computeTirePressure();
+    if(t.front!==null || t.rear!==null) lines.push("TIRE PSI: " + fmt(t.front) + " / " + fmt(t.rear));
+    lines.push("TIRES: " + COMPOUND[state.preset].name);
+
+    return lines.join("\n");
+  }
+
+  function flashButton(btn, msg){
+    var orig = btn.textContent;
+    btn.textContent = msg;
+    btn.disabled = true;
+    setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 1400);
+  }
+
+  // action buttons live in the header, next to the id row
+  (function addHeaderButtons(){
     var header = document.querySelector(".header-card");
-    var saveWrap = el("div");
-    saveWrap.style.marginTop = "14px";
-    saveWrap.style.display = "flex";
-    saveWrap.style.justifyContent = "flex-end";
-    var btn = el("button","btn primary","Save to garage");
-    btn.type="button";
-    btn.addEventListener("click", saveCurrent);
-    saveWrap.appendChild(btn);
-    header.appendChild(saveWrap);
+    var wrap = el("div");
+    wrap.style.marginTop = "14px";
+    wrap.style.display = "flex";
+    wrap.style.justifyContent = "flex-end";
+    wrap.style.gap = "8px";
+
+    var copyBtn = el("button","btn","Copy tune");
+    copyBtn.type="button";
+    copyBtn.addEventListener("click", function(){
+      var text = buildTuneText();
+      function done(ok){ flashButton(copyBtn, ok ? "Copied ✓" : "Copy failed"); }
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(function(){ done(true); }, function(){ done(false); });
+      } else {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        var ok = false;
+        try{ ok = document.execCommand("copy"); }catch(e){}
+        document.body.removeChild(ta);
+        done(ok);
+      }
+    });
+
+    var saveBtn = el("button","btn primary","Save to garage");
+    saveBtn.type="button";
+    saveBtn.addEventListener("click", function(){
+      saveCurrent();
+      flashButton(saveBtn, "Saved ✓");
+    });
+
+    wrap.appendChild(copyBtn);
+    wrap.appendChild(saveBtn);
+    header.appendChild(wrap);
   })();
 
   loadGarage();
