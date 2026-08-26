@@ -1,0 +1,1152 @@
+<title>Redline Tuning</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#eef0f4;
+    --surface:#ffffff;
+    --surface-2:#e4e7ee;
+    --line:#cdd2dd;
+    --text:#171a21;
+    --text-dim:#5b6274;
+    --accent:#c31f2c;
+    --accent-soft:#c31f2c1a;
+    --accent-2:#147d74;
+    --danger:#7a121c;
+    --info:#2d5fc4;
+    --shadow: 0 1px 2px rgba(20,22,30,.06), 0 8px 24px -12px rgba(20,22,30,.18);
+    --font-display:'Big Shoulders Display', 'Arial Narrow', sans-serif;
+    --font-body:'Public Sans', -apple-system, 'Segoe UI', sans-serif;
+    --font-mono:'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#12151b;
+      --surface:#1a1e27;
+      --surface-2:#232833;
+      --line:#333a48;
+      --text:#e9ebf1;
+      --text-dim:#98a1b3;
+      --accent:#ff3b46;
+      --accent-soft:#ff3b4622;
+      --accent-2:#4fd1c5;
+      --danger:#b8202f;
+      --info:#6c9bff;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px -14px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#12151b;
+    --surface:#1a1e27;
+    --surface-2:#232833;
+    --line:#333a48;
+    --text:#e9ebf1;
+    --text-dim:#98a1b3;
+    --accent:#ff8a3d;
+    --accent-soft:#ff8a3d22;
+    --accent-2:#4fd1c5;
+    --danger:#ff5470;
+    --info:#6c9bff;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px -14px rgba(0,0,0,.6);
+  }
+
+  *{box-sizing:border-box;}
+  @media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important;} }
+
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .app{
+    display:grid;
+    grid-template-columns: 272px 1fr;
+    min-height:100vh;
+  }
+  @media (max-width: 860px){
+    .app{ grid-template-columns: 1fr; }
+    .rail{ position:static; height:auto; border-right:none; border-bottom:1px solid var(--line); }
+  }
+
+  /* ---------- rail ---------- */
+  .rail{
+    background:var(--surface);
+    border-right:1px solid var(--line);
+    padding:20px 16px 24px;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+    position:sticky;
+    top:0;
+    height:100vh;
+    overflow-y:auto;
+  }
+  .brand{
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+    padding:2px 4px 0;
+  }
+  .brand-mark{ flex:none; display:block; }
+  .brand h1{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:22px;
+    letter-spacing:.02em;
+    margin:0;
+    line-height:1;
+  }
+  .brand span{
+    color:var(--text-dim);
+    font-size:11px;
+    font-family:var(--font-mono);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+  }
+
+  .rail-section-label{
+    font-family:var(--font-mono);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.09em;
+    color:var(--text-dim);
+    padding:0 4px;
+  }
+
+  .garage-list{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .garage-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    width:100%;
+    text-align:left;
+    padding:9px 10px;
+    border-radius:8px;
+    border:1px solid transparent;
+    background:transparent;
+    cursor:pointer;
+    font-family:var(--font-body);
+    color:var(--text);
+  }
+  .garage-item:hover{ background:var(--surface-2); }
+  .garage-item.active{
+    background:var(--accent-soft);
+    border-color:var(--accent);
+  }
+  .garage-item .dot{
+    width:7px;height:7px;border-radius:50%;flex:none;
+    background:var(--text-dim);
+  }
+  .garage-item.active .dot{ background:var(--accent); }
+  .garage-item .meta{ min-width:0; flex:1; }
+  .garage-item .meta .nm{
+    font-size:13.5px; font-weight:600;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .garage-item .meta .sub{
+    font-size:11px; color:var(--text-dim);
+    font-family:var(--font-mono);
+  }
+  .garage-item .del{
+    flex:none;
+    width:20px;height:20px;
+    border-radius:5px;
+    border:none;
+    background:transparent;
+    color:var(--text-dim);
+    font-size:14px;
+    line-height:1;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .garage-item .del:hover{ background:var(--danger); color:#fff; }
+
+  .rail-empty{
+    font-size:12.5px;
+    color:var(--text-dim);
+    padding:6px 4px;
+    line-height:1.5;
+  }
+
+  .btn{
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:13px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:var(--surface);
+    color:var(--text);
+    padding:9px 12px;
+    cursor:pointer;
+  }
+  .btn:hover{ border-color:var(--accent); }
+  .btn.primary{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+  }
+  .btn.primary:hover{ filter:brightness(1.06); }
+  .btn:focus-visible, .garage-item:focus-visible, input:focus-visible, select:focus-visible, .tab:focus-visible, .chip:focus-visible{
+    outline:2px solid var(--accent);
+    outline-offset:2px;
+  }
+
+  .rail-foot{
+    margin-top:auto;
+    font-size:11px;
+    color:var(--text-dim);
+    line-height:1.5;
+    padding:0 4px;
+  }
+
+  /* ---------- main ---------- */
+  main{ padding:24px 28px 64px; min-width:0; }
+  .header-card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:12px;
+    box-shadow:var(--shadow);
+    padding:18px 20px;
+    margin-bottom:18px;
+  }
+  .id-row{
+    display:grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr;
+    gap:14px;
+  }
+  @media (max-width: 700px){ .id-row{ grid-template-columns: 1fr 1fr; } }
+
+  .field label{
+    display:block;
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--text-dim);
+    margin-bottom:5px;
+  }
+  .field input[type="text"], .field select{
+    width:100%;
+    font-family:var(--font-body);
+    font-size:14px;
+    font-weight:600;
+    color:var(--text);
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    border-radius:7px;
+    padding:9px 10px;
+  }
+
+  .preset-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:16px;
+  }
+  .chip{
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:13px;
+    padding:9px 14px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:var(--surface-2);
+    color:var(--text-dim);
+    cursor:pointer;
+  }
+  .chip:hover{ color:var(--text); }
+  .chip.active{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+  }
+
+  .preset-summary{
+    margin-top:14px;
+    padding:12px 14px;
+    background:var(--accent-soft);
+    border:1px solid var(--accent);
+    border-radius:9px;
+    font-size:13px;
+    line-height:1.55;
+    color:var(--text);
+  }
+  .preset-summary b{ color:var(--accent); }
+
+  .finish-line{
+    height:11px;
+    border-radius:3px;
+    margin:0 0 22px;
+    border:1px solid var(--line);
+    background-color:var(--surface-2);
+    background-image:
+      linear-gradient(45deg, var(--line) 25%, transparent 25%, transparent 75%, var(--line) 75%, var(--line)),
+      linear-gradient(45deg, var(--line) 25%, transparent 25%, transparent 75%, var(--line) 75%, var(--line));
+    background-size:11px 11px;
+    background-position:0 0, 5.5px 5.5px;
+  }
+
+  /* tabs */
+  .tabbar{
+    display:flex;
+    gap:2px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:20px;
+    overflow-x:auto;
+  }
+  .tab{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:.02em;
+    background:transparent;
+    border:none;
+    color:var(--text-dim);
+    padding:10px 16px 12px;
+    cursor:pointer;
+    white-space:nowrap;
+    border-bottom:2px solid transparent;
+  }
+  .tab:hover{ color:var(--text); }
+  .tab.active{
+    color:var(--accent);
+    border-bottom-color:var(--accent);
+  }
+
+  .panel-note{
+    font-size:12.5px;
+    color:var(--text-dim);
+    line-height:1.6;
+    margin:-6px 0 16px;
+    max-width:62ch;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap:12px;
+  }
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:14px 15px 15px;
+    box-shadow:var(--shadow);
+  }
+  .card .lbl{
+    font-family:var(--font-mono);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.07em;
+    color:var(--text-dim);
+    margin-bottom:10px;
+  }
+  .readout{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .readout input{
+    width:0;
+    flex:1;
+    font-family:var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size:17px;
+    font-weight:500;
+    color:var(--text);
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    border-radius:7px;
+    padding:8px 8px;
+  }
+  .readout .arrow{
+    flex:none;
+    color:var(--text-dim);
+    font-size:16px;
+  }
+  .readout .out{
+    flex:1;
+    font-family:var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size:17px;
+    font-weight:600;
+    color:var(--accent);
+    background:var(--accent-soft);
+    border:1px solid var(--accent);
+    border-radius:7px;
+    padding:8px 8px;
+    text-align:right;
+  }
+  .readout .out.empty{
+    color:var(--text-dim);
+    background:var(--surface-2);
+    border-color:var(--line);
+    font-weight:400;
+  }
+  .card .delta{
+    margin-top:7px;
+    font-size:11px;
+    font-family:var(--font-mono);
+    color:var(--text-dim);
+    text-align:right;
+  }
+  .card .delta.up{ color:var(--info); }
+  .card .delta.down{ color:var(--danger); }
+
+  .target-only .out{
+    text-align:left;
+    width:100%;
+    font-size:20px;
+  }
+
+  .subhead{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:16px;
+    letter-spacing:.02em;
+    color:var(--text-dim);
+    text-transform:uppercase;
+    margin:22px 0 10px;
+  }
+  .subhead:first-child{ margin-top:0; }
+
+  .gearing-toolbar{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:14px;
+  }
+  .gearing-toolbar .field{ width:130px; }
+
+  .compound-card{
+    background:linear-gradient(135deg, var(--accent-soft), transparent);
+    border:1px solid var(--accent);
+    border-radius:10px;
+    padding:16px 18px;
+  }
+  .compound-card .lbl{ color:var(--accent); font-weight:600; }
+  .compound-card .name{
+    font-family:var(--font-display);
+    font-size:22px;
+    font-weight:700;
+    margin:2px 0 6px;
+  }
+  .compound-card .why{
+    font-size:13px;
+    color:var(--text-dim);
+    line-height:1.55;
+    max-width:60ch;
+  }
+
+  .footnote{
+    margin-top:26px;
+    font-size:12px;
+    color:var(--text-dim);
+    line-height:1.6;
+    max-width:70ch;
+  }
+</style>
+
+<div class="app">
+  <aside class="rail">
+    <div class="brand">
+      <svg class="brand-mark" width="26" height="26" viewBox="0 0 40 40" aria-hidden="true">
+        <circle cx="20" cy="20" r="16" fill="none" stroke="var(--line)" stroke-width="4"/>
+        <path d="M20 4 A16 16 0 0 1 35.3 15.1" stroke="var(--accent)" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <line x1="20" y1="20" x2="29" y2="9.5" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="20" cy="20" r="2.5" fill="var(--accent)"/>
+      </svg>
+      <div>
+        <h1>Redline&nbsp;Tuning</h1>
+        <div><span>tuning console</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="rail-section-label" style="margin-bottom:8px;">Garage</div>
+      <div class="garage-list" id="garageList"></div>
+      <div class="rail-empty" id="garageEmpty" style="display:none;">No cars saved yet. Fill in a car above and hit Save to build your garage.</div>
+    </div>
+
+    <button class="btn primary" id="newCarBtn" type="button">+ New car</button>
+
+    <div class="rail-foot">
+      Saved to this browser only. Numbers are calculated starting points from what you enter — always adjust from there by feel and tire temps once you're on track.
+    </div>
+  </aside>
+
+  <main>
+    <div class="header-card">
+      <div class="id-row">
+        <div class="field">
+          <label for="carName">Car</label>
+          <input type="text" id="carName" placeholder="e.g. 2020 BMW M2 Competition">
+        </div>
+        <div class="field">
+          <label for="drivetrain">Drivetrain</label>
+          <select id="drivetrain">
+            <option value="RWD">RWD</option>
+            <option value="FWD">FWD</option>
+            <option value="AWD">AWD</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="piClass">Class / PI</label>
+          <input type="text" id="piClass" placeholder="e.g. S2 836">
+        </div>
+        <div class="field">
+          <label for="game">Game</label>
+          <select id="game">
+            <option>Forza Motorsport</option>
+            <option>Forza Horizon</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="preset-row" id="presetRow"></div>
+      <div class="preset-summary" id="presetSummary"></div>
+    </div>
+
+    <div class="finish-line" role="presentation"></div>
+
+    <div class="tabbar" id="tabbar"></div>
+    <div id="panel"></div>
+
+    <div class="footnote">
+      These are calculated starting points, not dyno-verified numbers — Forza doesn't expose a tuning API, so every value here is derived from your car's own current setup using the direction and proportions that generally hold across cars for the selected goal. Confirm sliders can actually reach a suggested value before applying it, and refine from there once you're driving.
+    </div>
+  </main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = "setupSheetGarage";
+
+  var PRESETS = [
+    {id:"allaround", label:"All-Around"},
+    {id:"topspeed",  label:"Top Speed"},
+    {id:"drag",      label:"Drag"},
+    {id:"drift",     label:"Drift"},
+    {id:"wet",       label:"Wet"}
+  ];
+
+  var PRESET_SUMMARY = {
+    allaround: "Balanced for road courses and street driving: gearing tightened for punch out of corners, suspension and diff biased to fight understeer and rotate cleanly, braking nudged rearward for confident trail-braking.",
+    topspeed:  "Built to chase a top speed number: final drive and top gear stretched out, downforce pulled toward minimum, camber and toe flattened to cut rolling resistance and drag.",
+    drag:      "Straight-line launch and acceleration only: very short low gears for a hard launch, aggressive rear diff lock for traction off the line, minimal aero and rolling resistance.",
+    drift:     "Deliberately loose and controllable: rear-biased everything — antiroll, springs, differential lock, and brake balance — so the back end steps out predictably and holds an angle.",
+    wet:       "Softened across the board for low-grip conditions: gentler suspension and diff response, reduced camber, lower tire pressures for a bigger contact patch, and more front brake bias for stability."
+  };
+
+  var GEARING_FACTORS = {
+    allaround: {fd:1.05, g1:1.00, mid:0.95, top:0.92},
+    topspeed:  {fd:0.60, g1:0.95, mid:0.85, top:0.75},
+    drag:      {fd:0.55, g1:0.88, mid:0.80, top:0.70},
+    drift:     {fd:1.15, g1:1.05, mid:0.90, top:0.85},
+    wet:       {fd:1.00, g1:0.98, mid:0.97, top:0.97}
+  };
+
+  var BASE_ALIGNMENT = {
+    allaround: {camberF:-2.3, camberR:-1.8, toeF:-0.1, toeR:0.1, casterF:6.5},
+    topspeed:  {camberF:-0.8, camberR:-0.5, toeF:0.0,  toeR:0.0, casterF:6.0},
+    drag:      {camberF:-0.5, camberR:-0.5, toeF:0.0,  toeR:0.0, casterF:5.0},
+    drift:     {camberF:-3.0, camberR:-1.5, toeF:-0.3, toeR:-0.2, casterF:7.0},
+    wet:       {camberF:-1.5, camberR:-1.0, toeF:0.0,  toeR:0.0, casterF:5.5}
+  };
+  var ALIGN_DELTA = {
+    FWD: {camberF:-0.3, camberR:0.0,  toeF:-0.05, toeR:0.0},
+    RWD: {camberF:0.0,  camberR:-0.2, toeF:0.0,   toeR:0.05},
+    AWD: {camberF:0.0,  camberR:0.0,  toeF:0.0,   toeR:0.0}
+  };
+  var ALIGN_DT_APPLIES = {allaround:true, wet:true, drift:true, topspeed:false, drag:false};
+
+  var BIAS = {
+    allaround: { FWD:{front:0.75, rear:1.15}, RWD:{front:1.05, rear:0.95}, AWD:{front:0.85, rear:1.08} },
+    wet:       { FWD:{front:0.70, rear:1.05}, RWD:{front:0.90, rear:0.85}, AWD:{front:0.80, rear:0.90} },
+    drift:     { FWD:{front:0.70, rear:1.35}, RWD:{front:0.80, rear:1.30}, AWD:{front:0.75, rear:1.35} },
+    topspeed:  { FWD:{front:1.0,  rear:1.0 }, RWD:{front:1.0,  rear:1.0 }, AWD:{front:1.0,  rear:1.0 } },
+    drag:      { FWD:{front:1.0,  rear:1.0 }, RWD:{front:1.0,  rear:1.0 }, AWD:{front:1.0,  rear:1.0 } }
+  };
+
+  var RIDE_FACTOR = {
+    allaround: {front:0.92, rear:0.95},
+    wet:       {front:0.98, rear:1.00},
+    drift:     {front:0.90, rear:0.95},
+    topspeed:  {front:0.90, rear:0.93},
+    drag:      {front:0.90, rear:0.93}
+  };
+
+  var BRAKE_OFFSET   = {allaround:-4, wet:3, drift:-12, topspeed:0, drag:0};
+  var BRAKE_PRESSURE = {allaround:null, wet:85, drift:90, topspeed:100, drag:100};
+
+  var AERO_FACTOR = {
+    allaround: {front:0.85, rear:1.15},
+    wet:       {front:1.15, rear:1.15},
+    drift:     {front:0.60, rear:1.20},
+    topspeed:  {front:0.30, rear:0.30},
+    drag:      {front:0.15, rear:0.15}
+  };
+
+  var TIRE_PSI_OFFSET = {
+    allaround: {front:-1.5, rear:1.0},
+    wet:       {front:-2.5, rear:-2.0},
+    drift:     {front:-1.0, rear:-3.0},
+    topspeed:  {front:1.5,  rear:1.5},
+    drag:      {front:1.5,  rear:1.5}
+  };
+
+  var COMPOUND = {
+    allaround: {name:"Semi-Slick Race", why:"A big grip step over Sport while keeping real tread — stays usable if you catch a wet patch and breaks away progressively at the limit instead of on a cliff."},
+    topspeed:  {name:"Slick Race", why:"Maximum outright grip and minimal rolling resistance for a dry top-speed run; wet-weather grip isn't a concern here."},
+    drag:      {name:"Drag (or Slick Race)", why:"Purpose-built for straight-line launch traction — everything about this tire is tuned for one hard hit off the line, not cornering."},
+    drift:     {name:"Drift", why:"Intentionally reduced grip so the rear breaks away predictably and holds an angle instead of hooking back up."},
+    wet:       {name:"Sport or Semi-Slick Race", why:"Keep real tread depth — full slicks lose most of their grip in the wet. Pair with the lower pressures on the Tires tab."}
+  };
+
+  var DIFF_FACTORS = {
+    allaround: {frontAccel:0.85, rearAccel:1.08, decel:1.0,  centerRear:5},
+    wet:       {frontAccel:0.70, rearAccel:0.85, decel:0.85, centerRear:0},
+    drift:     {frontAccel:0.30, rearAccel:null, decel:1.0,  centerRear:null, rearAccelTarget:85, centerRearTarget:85},
+    topspeed:  {frontAccel:1.0,  rearAccel:1.0,  decel:1.0,  centerRear:0},
+    drag:      {frontAccel:1.0,  rearAccel:null, decel:1.0,  centerRear:null, rearAccelTarget:78, centerRearTarget:70}
+  };
+
+  var TABS = [
+    {id:"gearing",  label:"Gearing"},
+    {id:"alignment",label:"Alignment"},
+    {id:"antiroll", label:"Antiroll"},
+    {id:"springs",  label:"Springs"},
+    {id:"damping",  label:"Damping"},
+    {id:"brake",    label:"Brake"},
+    {id:"diff",     label:"Differential"},
+    {id:"aero",     label:"Aero"},
+    {id:"tires",    label:"Tires"}
+  ];
+
+  function round1(n){ return Math.round(n*10)/10; }
+  function round2(n){ return Math.round(n*100)/100; }
+  function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
+  function num(v){ return (v===null || v===undefined || v==="" || isNaN(v)) ? null : parseFloat(v); }
+
+  function blankState(){
+    return {
+      id: null,
+      name: "",
+      drivetrain: "RWD",
+      piClass: "",
+      game: "Forza Motorsport",
+      preset: "allaround",
+      activeTab: "gearing",
+      gearing: { numGears:6, finalDrive:null, gears:[null,null,null,null,null,null,null,null,null,null] },
+      antiroll: { front:null, rear:null },
+      springs: { front:null, rear:null, rideF:null, rideR:null },
+      damping: { reboundF:null, reboundR:null, bumpF:null, bumpR:null },
+      brake: { balance:null, pressure:null },
+      diff: { frontAccel:null, frontDecel:null, rearAccel:null, rearDecel:null, center:null },
+      aero: { front:null, rear:null },
+      tires: { front:null, rear:null }
+    };
+  }
+
+  var state = blankState();
+  var garage = [];
+
+  function loadGarage(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      garage = raw ? JSON.parse(raw) : [];
+    }catch(e){ garage = []; }
+  }
+  function persistGarage(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(garage)); }catch(e){}
+  }
+
+  // ---------- compute ----------
+  function computeGearing(){
+    var f = GEARING_FACTORS[state.preset];
+    var g = state.gearing;
+    var fd = num(g.finalDrive);
+    var out = { finalDrive: fd!==null ? round2(fd*f.fd) : null, gears: [] };
+    for(var i=0;i<g.numGears;i++){
+      var v = num(g.gears[i]);
+      if(v===null){ out.gears.push(null); continue; }
+      var mult = (i===0) ? f.g1 : (i===g.numGears-1 ? f.top : f.mid);
+      out.gears.push(round2(v*mult));
+    }
+    return out;
+  }
+
+  function computeAlignment(){
+    var base = BASE_ALIGNMENT[state.preset];
+    var delta = ALIGN_DT_APPLIES[state.preset] ? ALIGN_DELTA[state.drivetrain] : {camberF:0,camberR:0,toeF:0,toeR:0};
+    return {
+      camberF: round1(base.camberF + delta.camberF),
+      camberR: round1(base.camberR + delta.camberR),
+      toeF:    round1(base.toeF + (delta.toeF||0)),
+      toeR:    round1(base.toeR + (delta.toeR||0)),
+      casterF: base.casterF
+    };
+  }
+
+  function computeBias(front, rear){
+    var b = BIAS[state.preset][state.drivetrain];
+    var f = num(front), r = num(rear);
+    return {
+      front: f!==null ? round1(f*b.front) : null,
+      rear:  r!==null ? round1(r*b.rear)  : null
+    };
+  }
+
+  function computeDamping(){
+    var b = BIAS[state.preset][state.drivetrain];
+    var fMult = 1 - (1-b.front)*0.7;
+    var rMult = 1 + (b.rear-1)*0.7;
+    var d = state.damping;
+    var rf = num(d.reboundF), rr = num(d.reboundR), bf = num(d.bumpF), br = num(d.bumpR);
+    return {
+      reboundF: rf!==null ? round1(rf*fMult) : null,
+      reboundR: rr!==null ? round1(rr*rMult) : null,
+      bumpF:    bf!==null ? round1(bf*fMult) : null,
+      bumpR:    br!==null ? round1(br*rMult) : null
+    };
+  }
+
+  function computeRide(){
+    var rf = RIDE_FACTOR[state.preset];
+    var f = num(state.springs.rideF), r = num(state.springs.rideR);
+    return {
+      rideF: f!==null ? round1(f*rf.front) : null,
+      rideR: r!==null ? round1(r*rf.rear) : null
+    };
+  }
+
+  function computeBrake(){
+    var bal = num(state.brake.balance);
+    var pres = num(state.brake.pressure);
+    var pTarget = BRAKE_PRESSURE[state.preset];
+    return {
+      balance: bal!==null ? clamp(round1(bal + BRAKE_OFFSET[state.preset]), 0, 100) : null,
+      pressure: pTarget!==null ? pTarget : pres
+    };
+  }
+
+  function computeDiff(){
+    var f = DIFF_FACTORS[state.preset];
+    var d = state.diff;
+    var fa = num(d.frontAccel), fd = num(d.frontDecel), ra = num(d.rearAccel), rd = num(d.rearDecel), c = num(d.center);
+    var out = {};
+    out.frontAccel = fa!==null ? clamp(round1(fa*f.frontAccel), 0, 100) : null;
+    out.frontDecel = fd!==null ? clamp(round1(fd*f.decel), 0, 100) : null;
+
+    if(f.rearAccel!==null){
+      out.rearAccel = ra!==null ? clamp(round1(ra*f.rearAccel), 0, 100) : null;
+    } else {
+      out.rearAccel = ra!==null ? clamp(round1(ra*0.3 + f.rearAccelTarget*0.7), 0, 100) : f.rearAccelTarget;
+    }
+    out.rearDecel = rd!==null ? clamp(round1(rd*f.decel), 0, 100) : null;
+
+    if(state.drivetrain==="AWD"){
+      if(f.centerRear!==null){
+        out.center = c!==null ? clamp(round1(c + f.centerRear), 0, 100) : null;
+      } else {
+        out.center = c!==null ? clamp(round1(c*0.3 + f.centerRearTarget*0.7), 0, 100) : f.centerRearTarget;
+      }
+    } else {
+      out.center = null;
+    }
+    return out;
+  }
+
+  function computeAero(){
+    var af = AERO_FACTOR[state.preset];
+    var f = num(state.aero.front), r = num(state.aero.rear);
+    return {
+      front: f!==null ? Math.round(f*af.front) : null,
+      rear:  r!==null ? Math.round(r*af.rear)  : null
+    };
+  }
+
+  function computeTirePressure(){
+    var off = TIRE_PSI_OFFSET[state.preset];
+    var f = num(state.tires.front), r = num(state.tires.rear);
+    return {
+      front: f!==null ? round1(f+off.front) : null,
+      rear:  r!==null ? round1(r+off.rear)  : null
+    };
+  }
+
+  // ---------- rendering helpers ----------
+  function el(tag, cls, html){
+    var e = document.createElement(tag);
+    if(cls) e.className = cls;
+    if(html!==undefined) e.innerHTML = html;
+    return e;
+  }
+
+  function deltaTag(oldV, newV, higherIsRear){
+    if(oldV===null || newV===null || oldV===0) return "";
+    var diff = newV-oldV;
+    if(Math.abs(diff) < 0.005) return '<span class="delta">no change</span>';
+    var cls = diff>0 ? "up" : "down";
+    var sign = diff>0 ? "+" : "";
+    return '<span class="delta '+cls+'">'+sign+round2(diff)+'</span>';
+  }
+
+  function inputRow(container, label, unit, curVal, curSetter, outVal, fieldId){
+    var card = el("div","card");
+    card.appendChild(el("div","lbl", label + (unit? ' <span style="opacity:.6">('+unit+')</span>' : "")));
+    var row = el("div","readout");
+    var input = document.createElement("input");
+    input.type = "text";
+    input.inputMode = "decimal";
+    input.placeholder = "current";
+    input.value = curVal===null ? "" : curVal;
+    if(fieldId) input.id = fieldId;
+    input.addEventListener("input", function(){
+      curSetter(input.value===""? null : input.value);
+      renderPanel();
+      persistIfSaved();
+    });
+    var arrow = el("div","arrow","&#8594;");
+    var out = el("div", "out" + (outVal===null?" empty":""), outVal===null ? "—" : (typeof outVal==="number" ? outVal : outVal));
+    row.appendChild(input); row.appendChild(arrow); row.appendChild(out);
+    card.appendChild(row);
+    if(outVal!==null && curVal!==null && curVal!==""){
+      card.insertAdjacentHTML("beforeend", deltaTag(parseFloat(curVal), outVal));
+    }
+    container.appendChild(card);
+  }
+
+  function targetCard(container, label, value, unit){
+    var card = el("div","card target-only");
+    card.appendChild(el("div","lbl",label));
+    card.appendChild(el("div","out", value + (unit? ' <span style="font-size:12px;color:var(--text-dim);">'+unit+'</span>' : "")));
+    container.appendChild(card);
+  }
+
+  // ---------- panel renderers ----------
+  function renderGearingPanel(root){
+    root.appendChild(el("div","panel-note","Every gear scales off what you enter for that car — enter your in-game Final Drive and gear ratios and this stretches or tightens them for the selected goal."));
+
+    var toolbar = el("div","gearing-toolbar");
+    var field = el("div","field");
+    field.appendChild(el("label","","Gear count"));
+    var sel = document.createElement("select");
+    for(var n=5;n<=10;n++){
+      var o = document.createElement("option");
+      o.value=n; o.textContent=n+" gears";
+      if(n===state.gearing.numGears) o.selected=true;
+      sel.appendChild(o);
+    }
+    sel.addEventListener("change", function(){
+      state.gearing.numGears = parseInt(sel.value,10);
+      renderPanel(); persistIfSaved();
+    });
+    field.appendChild(sel);
+    toolbar.appendChild(field);
+    root.appendChild(toolbar);
+
+    var out = computeGearing();
+    var grid = el("div","grid");
+    inputRow(grid, "Final Drive", "", state.gearing.finalDrive, function(v){ state.gearing.finalDrive=v; }, out.finalDrive, "f_gearing_fd");
+    root.appendChild(grid);
+
+    var grid2 = el("div","grid");
+    var names = ["1st","2nd","3rd","4th","5th","6th","7th","8th","9th","10th"];
+    for(var i=0;i<state.gearing.numGears;i++){
+      (function(i){
+        inputRow(grid2, names[i], "", state.gearing.gears[i], function(v){ state.gearing.gears[i]=v; }, out.gears[i], "f_gearing_gear"+i);
+      })(i);
+    }
+    root.appendChild(grid2);
+  }
+
+  function renderAlignmentPanel(root){
+    root.appendChild(el("div","panel-note","Alignment targets below are set directly from your goal and drivetrain — no current values needed, just dial the sliders toward these."));
+    var a = computeAlignment();
+    var grid = el("div","grid");
+    targetCard(grid,"Front Camber", a.camberF, "deg");
+    targetCard(grid,"Rear Camber", a.camberR, "deg");
+    targetCard(grid,"Front Toe", (a.toeF>0?"+":"")+a.toeF, "deg");
+    targetCard(grid,"Rear Toe", (a.toeR>0?"+":"")+a.toeR, "deg");
+    targetCard(grid,"Front Caster", a.casterF, "deg");
+    root.appendChild(grid);
+  }
+
+  function renderAntirollPanel(root){
+    root.appendChild(el("div","panel-note","Softer front / stiffer rear encourages rotation and fights understeer; the reverse adds stability and understeer. Enter your current bars — the numbers below already lean the right way for your drivetrain and goal."));
+    var out = computeBias(state.antiroll.front, state.antiroll.rear);
+    var grid = el("div","grid");
+    inputRow(grid,"Front Bar","", state.antiroll.front, function(v){ state.antiroll.front=v; }, out.front, "f_antiroll_front");
+    inputRow(grid,"Rear Bar","", state.antiroll.rear, function(v){ state.antiroll.rear=v; }, out.rear, "f_antiroll_rear");
+    root.appendChild(grid);
+  }
+
+  function renderSpringsPanel(root){
+    root.appendChild(el("div","subhead","Spring Rate"));
+    var out = computeBias(state.springs.front, state.springs.rear);
+    var grid = el("div","grid");
+    inputRow(grid,"Front Spring","lb/in", state.springs.front, function(v){ state.springs.front=v; }, out.front, "f_springs_front");
+    inputRow(grid,"Rear Spring","lb/in", state.springs.rear, function(v){ state.springs.rear=v; }, out.rear, "f_springs_rear");
+    root.appendChild(grid);
+
+    root.appendChild(el("div","subhead","Ride Height"));
+    var ride = computeRide();
+    var grid2 = el("div","grid");
+    inputRow(grid2,"Front Ride Height","in", state.springs.rideF, function(v){ state.springs.rideF=v; }, ride.rideF, "f_springs_rideF");
+    inputRow(grid2,"Rear Ride Height","in", state.springs.rideR, function(v){ state.springs.rideR=v; }, ride.rideR, "f_springs_rideR");
+    root.appendChild(grid2);
+  }
+
+  function renderDampingPanel(root){
+    root.appendChild(el("div","panel-note","Damping is scaled to track your spring bias rather than mirror it one-to-one, so it works with the front/rear split above instead of overpowering it."));
+    var out = computeDamping();
+    root.appendChild(el("div","subhead","Rebound Stiffness"));
+    var grid = el("div","grid");
+    inputRow(grid,"Front Rebound","", state.damping.reboundF, function(v){ state.damping.reboundF=v; }, out.reboundF, "f_damping_reboundF");
+    inputRow(grid,"Rear Rebound","", state.damping.reboundR, function(v){ state.damping.reboundR=v; }, out.reboundR, "f_damping_reboundR");
+    root.appendChild(grid);
+
+    root.appendChild(el("div","subhead","Bump Stiffness"));
+    var grid2 = el("div","grid");
+    inputRow(grid2,"Front Bump","", state.damping.bumpF, function(v){ state.damping.bumpF=v; }, out.bumpF, "f_damping_bumpF");
+    inputRow(grid2,"Rear Bump","", state.damping.bumpR, function(v){ state.damping.bumpR=v; }, out.bumpR, "f_damping_bumpR");
+    root.appendChild(grid2);
+  }
+
+  function renderBrakePanel(root){
+    root.appendChild(el("div","panel-note","Balance is on a Rear→Front scale. Moving it down (toward rear) adds rotation on trail-braking; moving it up adds stability but more understeer."));
+    var out = computeBrake();
+    var grid = el("div","grid");
+    inputRow(grid,"Balance","% toward front", state.brake.balance, function(v){ state.brake.balance=v; }, out.balance, "f_brake_balance");
+    inputRow(grid,"Pressure","%", state.brake.pressure, function(v){ state.brake.pressure=v; }, out.pressure, "f_brake_pressure");
+    root.appendChild(grid);
+  }
+
+  function renderDiffPanel(root){
+    root.appendChild(el("div","panel-note","Only the differentials your drivetrain actually has are shown. Lower front accel-lock fights understeer; higher rear accel-lock and center-rear bias add traction and a more rear-wheel-drive feel."));
+    var out = computeDiff();
+    var showFront = state.drivetrain !== "RWD";
+    var showRear = state.drivetrain !== "FWD";
+
+    if(showFront){
+      root.appendChild(el("div","subhead","Front Differential"));
+      var g1 = el("div","grid");
+      inputRow(g1,"Accel Lock","%", state.diff.frontAccel, function(v){ state.diff.frontAccel=v; }, out.frontAccel, "f_diff_frontAccel");
+      inputRow(g1,"Decel Lock","%", state.diff.frontDecel, function(v){ state.diff.frontDecel=v; }, out.frontDecel, "f_diff_frontDecel");
+      root.appendChild(g1);
+    }
+    if(showRear){
+      root.appendChild(el("div","subhead","Rear Differential"));
+      var g2 = el("div","grid");
+      inputRow(g2,"Accel Lock","%", state.diff.rearAccel, function(v){ state.diff.rearAccel=v; }, out.rearAccel, "f_diff_rearAccel");
+      inputRow(g2,"Decel Lock","%", state.diff.rearDecel, function(v){ state.diff.rearDecel=v; }, out.rearDecel, "f_diff_rearDecel");
+      root.appendChild(g2);
+    }
+    if(state.drivetrain==="AWD"){
+      root.appendChild(el("div","subhead","Center Balance"));
+      var g3 = el("div","grid");
+      inputRow(g3,"Rear Bias","%", state.diff.center, function(v){ state.diff.center=v; }, out.center, "f_diff_center");
+      root.appendChild(g3);
+    }
+    if(!showFront && !showRear){
+      root.appendChild(el("div","panel-note","This drivetrain has no differential to tune here."));
+    }
+  }
+
+  function renderAeroPanel(root){
+    root.appendChild(el("div","panel-note","Downforce adds grip at the cost of drag. Pulling it down helps top speed; pushing it up (and rearward) helps cornering confidence and fights understeer at speed."));
+    var out = computeAero();
+    var grid = el("div","grid");
+    inputRow(grid,"Front Downforce","lb", state.aero.front, function(v){ state.aero.front=v; }, out.front, "f_aero_front");
+    inputRow(grid,"Rear Downforce","lb", state.aero.rear, function(v){ state.aero.rear=v; }, out.rear, "f_aero_rear");
+    root.appendChild(grid);
+  }
+
+  function renderTiresPanel(root){
+    root.appendChild(el("div","subhead","Tire Pressure"));
+    var out = computeTirePressure();
+    var grid = el("div","grid");
+    inputRow(grid,"Front Pressure","psi", state.tires.front, function(v){ state.tires.front=v; }, out.front, "f_tires_front");
+    inputRow(grid,"Rear Pressure","psi", state.tires.rear, function(v){ state.tires.rear=v; }, out.rear, "f_tires_rear");
+    root.appendChild(grid);
+
+    root.appendChild(el("div","subhead","Compound"));
+    var c = COMPOUND[state.preset];
+    var card = el("div","compound-card");
+    card.appendChild(el("div","lbl","Recommended"));
+    card.appendChild(el("div","name", c.name));
+    card.appendChild(el("div","why", c.why));
+    root.appendChild(card);
+  }
+
+  var PANEL_RENDERERS = {
+    gearing: renderGearingPanel,
+    alignment: renderAlignmentPanel,
+    antiroll: renderAntirollPanel,
+    springs: renderSpringsPanel,
+    damping: renderDampingPanel,
+    brake: renderBrakePanel,
+    diff: renderDiffPanel,
+    aero: renderAeroPanel,
+    tires: renderTiresPanel
+  };
+
+  // ---------- top-level render ----------
+  function renderPresets(){
+    var row = document.getElementById("presetRow");
+    row.innerHTML = "";
+    PRESETS.forEach(function(p){
+      var chip = el("button","chip"+(state.preset===p.id?" active":""), p.label);
+      chip.type = "button";
+      chip.addEventListener("click", function(){
+        state.preset = p.id;
+        renderPresets();
+        renderPanel();
+        persistIfSaved();
+      });
+      row.appendChild(chip);
+    });
+    document.getElementById("presetSummary").innerHTML = "<b>"+PRESETS.find(function(p){return p.id===state.preset;}).label+".</b> "+PRESET_SUMMARY[state.preset];
+  }
+
+  function renderTabs(){
+    var bar = document.getElementById("tabbar");
+    bar.innerHTML = "";
+    TABS.forEach(function(t){
+      var b = el("button","tab"+(state.activeTab===t.id?" active":""), t.label);
+      b.type="button";
+      b.addEventListener("click", function(){
+        state.activeTab = t.id;
+        renderTabs();
+        renderPanel();
+      });
+      bar.appendChild(b);
+    });
+  }
+
+  function renderPanel(){
+    var active = document.activeElement;
+    var focusedId = (active && active.tagName==="INPUT" && active.id) ? active.id : null;
+    var selStart = focusedId ? active.selectionStart : null;
+    var selEnd = focusedId ? active.selectionEnd : null;
+
+    var root = document.getElementById("panel");
+    root.innerHTML = "";
+    PANEL_RENDERERS[state.activeTab](root);
+
+    if(focusedId){
+      var restored = document.getElementById(focusedId);
+      if(restored){
+        restored.focus();
+        try{ restored.setSelectionRange(selStart, selEnd); }catch(e){}
+      }
+    }
+  }
+
+  function renderIdentity(){
+    document.getElementById("carName").value = state.name;
+    document.getElementById("drivetrain").value = state.drivetrain;
+    document.getElementById("piClass").value = state.piClass;
+    document.getElementById("game").value = state.game;
+  }
+
+  // ---------- garage ----------
+  function renderGarage(){
+    var list = document.getElementById("garageList");
+    var empty = document.getElementById("garageEmpty");
+    list.innerHTML = "";
+    if(garage.length===0){ empty.style.display="block"; return; }
+    empty.style.display="none";
+    garage.slice().sort(function(a,b){ return (b.updatedAt||0)-(a.updatedAt||0); }).forEach(function(car){
+      var item = el("div","garage-item"+(state.id===car.id?" active":""));
+      item.tabIndex = 0;
+      var dot = el("div","dot");
+      var meta = el("div","meta");
+      meta.appendChild(el("div","nm", car.name || "Unnamed car"));
+      var presetLabel = PRESETS.find(function(p){return p.id===car.preset;});
+      meta.appendChild(el("div","sub", (car.drivetrain||"") + " · " + (presetLabel?presetLabel.label:"") ));
+      var del = el("button","del","&times;");
+      del.type="button";
+      del.addEventListener("click", function(e){
+        e.stopPropagation();
+        garage = garage.filter(function(c){ return c.id!==car.id; });
+        persistGarage();
+        if(state.id===car.id){ state = blankState(); renderAll(); }
+        renderGarage();
+      });
+      item.appendChild(dot); item.appendChild(meta); item.appendChild(del);
+      item.addEventListener("click", function(){
+        state = JSON.parse(JSON.stringify(car));
+        renderAll();
+      });
+      list.appendChild(item);
+    });
+  }
+
+  function persistIfSaved(){
+    if(state.id===null) return;
+    state.updatedAt = Date.now();
+    var idx = garage.findIndex(function(c){ return c.id===state.id; });
+    if(idx>=0){ garage[idx] = JSON.parse(JSON.stringify(state)); persistGarage(); renderGarage(); }
+  }
+
+  function saveCurrent(){
+    if(state.id===null){ state.id = Date.now()+"-"+Math.random().toString(36).slice(2,7); }
+    state.updatedAt = Date.now();
+    var idx = garage.findIndex(function(c){ return c.id===state.id; });
+    var copy = JSON.parse(JSON.stringify(state));
+    if(idx>=0){ garage[idx]=copy; } else { garage.push(copy); }
+    persistGarage();
+    renderGarage();
+  }
+
+  function renderAll(){
+    renderIdentity();
+    renderPresets();
+    renderTabs();
+    renderPanel();
+    renderGarage();
+  }
+
+  // ---------- wire up ----------
+  document.getElementById("carName").addEventListener("input", function(e){ state.name = e.target.value; persistIfSaved(); renderGarage(); });
+  document.getElementById("drivetrain").addEventListener("change", function(e){ state.drivetrain = e.target.value; renderPanel(); persistIfSaved(); renderGarage(); });
+  document.getElementById("piClass").addEventListener("input", function(e){ state.piClass = e.target.value; persistIfSaved(); });
+  document.getElementById("game").addEventListener("change", function(e){ state.game = e.target.value; persistIfSaved(); });
+
+  document.getElementById("newCarBtn").addEventListener("click", function(){
+    state = blankState();
+    renderAll();
+  });
+
+  // save button lives in header for convenience — add it next to the id row
+  (function addSaveButton(){
+    var header = document.querySelector(".header-card");
+    var saveWrap = el("div");
+    saveWrap.style.marginTop = "14px";
+    saveWrap.style.display = "flex";
+    saveWrap.style.justifyContent = "flex-end";
+    var btn = el("button","btn primary","Save to garage");
+    btn.type="button";
+    btn.addEventListener("click", saveCurrent);
+    saveWrap.appendChild(btn);
+    header.appendChild(saveWrap);
+  })();
+
+  loadGarage();
+  renderAll();
+})();
+</script>
